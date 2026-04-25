@@ -14,7 +14,13 @@
           <p class="eyebrow">Mock Amazon Connect</p>
           <h1>Agent Dashboard</h1>
         </div>
-        <a class="agent-link" href="/">Customer Chat</a>
+        <div class="header-actions">
+          <div class="session-pill">
+            <span>Agent</span>
+            <strong id="agentIdLabel">agent-local</strong>
+          </div>
+          <a class="agent-link" href="/">Customer Chat</a>
+        </div>
       </header>
 
       <section class="agent-grid">
@@ -33,6 +39,12 @@
           </div>
 
           <div id="agentMessages" class="messages agent-messages"></div>
+
+          <div class="canned-replies" aria-label="Canned replies">
+            <button type="button" data-reply="Hello, how can I help?">Greeting</button>
+            <button type="button" data-reply="I am checking this now.">Checking</button>
+            <button type="button" data-reply="Thanks, I will close this chat.">Close Notice</button>
+          </div>
 
           <form id="agentForm" class="composer">
             <input

@@ -8,9 +8,12 @@ const form = document.querySelector("#agentForm");
 const input = document.querySelector("#agentMessageInput");
 const sendButton = form.querySelector("button");
 const endChatButton = document.querySelector("#endChatButton");
+const cannedReplyButtons = document.querySelectorAll("[data-reply]");
 
 let activeTask = null;
 
+document.querySelector("#agentIdLabel").textContent = agentId;
+setComposerEnabled(false);
 socket.emit("agent:join", { agentId });
 
 socket.on("agent:tasks", ({ waiting, active }) => {
@@ -59,6 +62,15 @@ endChatButton.addEventListener("click", () => {
   });
 });
 
+cannedReplyButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (!activeTask) return;
+
+    input.value = button.dataset.reply;
+    input.focus();
+  });
+});
+
 function renderWaitingTasks(tasks) {
   waitingCount.textContent = String(tasks.length);
   waitingTasks.replaceChildren();
@@ -66,7 +78,7 @@ function renderWaitingTasks(tasks) {
   if (!tasks.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "No customers are waiting.";
+    empty.textContent = "No customers are waiting. Ask a customer to click Agent in the chat page.";
     waitingTasks.appendChild(empty);
     return;
   }
@@ -78,6 +90,10 @@ function renderWaitingTasks(tasks) {
     const title = document.createElement("strong");
     title.textContent = task.sessionId;
 
+    const meta = document.createElement("div");
+    meta.className = "task-meta";
+    meta.append(createMetaItem("State", task.state), createMetaItem("Created", formatTime(task.createdAt)));
+
     const lastMessage = document.createElement("p");
     lastMessage.textContent = task.lastMessage?.content || "No message";
 
@@ -86,7 +102,7 @@ function renderWaitingTasks(tasks) {
     button.textContent = "Accept";
     button.addEventListener("click", () => acceptTask(task.taskId));
 
-    card.append(title, lastMessage, button);
+    card.append(title, meta, lastMessage, button);
     waitingTasks.appendChild(card);
   });
 }
@@ -133,7 +149,26 @@ function setComposerEnabled(enabled) {
   input.disabled = !enabled;
   sendButton.disabled = !enabled;
   endChatButton.disabled = !enabled;
+  cannedReplyButtons.forEach((button) => {
+    button.disabled = !enabled;
+  });
   input.placeholder = enabled ? "Type reply to customer..." : "Accept a chat to reply...";
+}
+
+function createMetaItem(label, value) {
+  const item = document.createElement("span");
+  item.textContent = `${label}: ${value}`;
+  return item;
+}
+
+function formatTime(value) {
+  if (!value) return "Unknown";
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(new Date(value));
 }
 
 function getOrCreateAgentId() {

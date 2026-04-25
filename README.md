@@ -12,6 +12,10 @@ It does not use OpenAI, Ollama, AWS, Twilio, paid APIs, cloud services, or exter
 
 - Browser customer chat at `http://localhost:3000`
 - Browser agent dashboard at `http://localhost:3000/agent`
+- Customer state banner for `BOT_ACTIVE`, `WAITING_FOR_AGENT`, `AGENT_CONNECTED`, and `ENDED`
+- `New Session` button for clean demo resets
+- Rich agent queue cards with session metadata
+- Canned agent replies for faster demos
 - Existing `POST /chat` endpoint
 - Keyword-based intent detection
 - In-memory session state
@@ -46,8 +50,9 @@ Fastest test:
 
 1. In the customer page, click `Agent`.
 2. In the agent dashboard, click `Accept`.
-3. Send messages from both pages.
-4. Click `End Chat` in the agent dashboard.
+3. Use a canned reply or type a reply from the agent page.
+4. Send a customer reply from the customer page.
+5. Click `End Chat` in the agent dashboard.
 
 ## Conversation States
 
@@ -231,6 +236,32 @@ ENDED
 
 Everything happens locally through Express and Socket.IO.
 
+## Demo Script
+
+Use this flow when showing the project:
+
+1. Start the app with `npm run dev`.
+2. Open `http://localhost:3000` as the customer.
+3. Open `http://localhost:3000/agent` as the mock agent.
+4. In the customer page, click `Greeting` to show normal bot handling.
+5. Click `Order Status` to show slot extraction and `EndConversation`.
+6. Click `New Session` to start a clean customer conversation.
+7. Click `Agent` to create a waiting live-agent task.
+8. In the customer page, confirm the state banner shows `WAITING_FOR_AGENT`.
+9. In the agent dashboard, confirm the waiting card shows session ID, state, created time, and last message.
+10. Click `Accept`.
+11. Confirm the customer state banner shows `AGENT_CONNECTED`.
+12. Use a canned reply, then click `Send`.
+13. Send one customer reply from the customer page.
+14. Click `End Chat` in the agent dashboard.
+15. Confirm the customer state banner shows `ENDED`.
+
+Expected states during the handoff:
+
+```text
+BOT_ACTIVE -> WAITING_FOR_AGENT -> AGENT_CONNECTED -> ENDED
+```
+
 ## Frontend Pages
 
 ### Customer Chat
@@ -245,6 +276,8 @@ Use this page as the customer. It has:
 
 - Chat message input
 - Quick intent buttons
+- Conversation state banner
+- `New Session` button
 - Bot response area
 - Intent display
 - Connect action display
@@ -263,8 +296,10 @@ http://localhost:3000/agent
 Use this page as the mock support agent. It has:
 
 - Waiting customer queue
+- Waiting chat cards with session ID, state, created time, and last customer message
 - `Accept` button
 - Live chat workspace
+- Canned reply buttons
 - Agent reply input
 - `End Chat` button
 
@@ -394,8 +429,9 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:3000/chat" -ContentType "a
 7. Agent clicks `Accept`.
 8. Server changes state to `AGENT_CONNECTED`.
 9. Customer and agent exchange Socket.IO messages.
-10. Agent clicks `End Chat`.
-11. Server changes state to `ENDED`.
+10. Agent can use canned replies or type custom replies.
+11. Agent clicks `End Chat`.
+12. Server changes state to `ENDED`.
 
 ## Important Files
 
@@ -439,11 +475,11 @@ In-memory mock agent task state.
 
 ### `public/index.html`
 
-Customer chatbot page.
+Customer chatbot page with state banner, quick actions, details panel, and new-session control.
 
 ### `public/agent.html`
 
-Mock live-agent dashboard.
+Mock live-agent dashboard with waiting queue, queue metadata, canned replies, and end-chat control.
 
 ## Socket.IO Events
 
@@ -544,7 +580,8 @@ Check these steps:
 1. Open both pages from the same running server.
 2. In the customer page, click `Agent`.
 3. Confirm the customer page shows `WAITING_FOR_AGENT`.
-4. Refresh `/agent` if it was opened before the server restarted.
+4. Confirm the agent dashboard queue count increases.
+5. Refresh `/agent` if it was opened before the server restarted.
 
 ### Messages do not move between customer and agent
 

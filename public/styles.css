@@ -31,6 +31,10 @@ input {
   font: inherit;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -116,6 +120,22 @@ h1 {
   background: #eef6f4;
 }
 
+.secondary-button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.secondary-button:hover {
+  background: #f4f6f8;
+}
+
 .session-pill span {
   color: var(--muted);
   font-size: 0.72rem;
@@ -131,6 +151,39 @@ h1 {
   gap: 8px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--panel-border);
+}
+
+.state-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 0.92rem;
+}
+
+.state-banner strong {
+  white-space: nowrap;
+}
+
+.state-banner span {
+  color: var(--muted);
+}
+
+.state-bot {
+  background: #eef6f4;
+}
+
+.state-waiting {
+  background: #fff7df;
+}
+
+.state-agent {
+  background: #e9f2ff;
+}
+
+.state-ended {
+  background: #f1f3f5;
 }
 
 .quick-actions button,
@@ -149,6 +202,10 @@ h1 {
 
 .quick-actions button:hover {
   background: #d7eee9;
+}
+
+.quick-actions button:disabled {
+  opacity: 0.45;
 }
 
 .messages {
@@ -296,6 +353,11 @@ pre {
 
   .session-pill {
     text-align: left;
+  }
+
+  .state-banner {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .composer {

@@ -16,12 +16,18 @@
           </div>
           <div class="header-actions">
             <a class="agent-link" href="/agent" target="_blank" rel="noreferrer">Agent Dashboard</a>
+            <button id="newSessionButton" class="secondary-button" type="button">New Session</button>
             <div class="session-pill">
               <span>Session</span>
               <strong id="sessionIdLabel">demo-1</strong>
             </div>
           </div>
         </header>
+
+        <div id="stateBanner" class="state-banner state-bot">
+          <strong>BOT_ACTIVE</strong>
+          <span>Bot is handling this conversation.</span>
+        </div>
 
         <div class="quick-actions" aria-label="Sample messages">
           <button type="button" data-message="hello">Greeting</button>

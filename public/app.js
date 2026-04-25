@@ -2,6 +2,8 @@ const form = document.querySelector("#chatForm");
 const input = document.querySelector("#messageInput");
 const messages = document.querySelector("#messages");
 const quickActionButtons = document.querySelectorAll("[data-message]");
+const newSessionButton = document.querySelector("#newSessionButton");
+const stateBanner = document.querySelector("#stateBanner");
 const sessionId = getOrCreateSessionId();
 const socket = io();
 
@@ -9,6 +11,11 @@ document.querySelector("#sessionIdLabel").textContent = sessionId;
 
 appendMessage("bot", "Hello. Try one of the sample buttons or type your own message.");
 socket.emit("customer:join", { sessionId });
+
+newSessionButton.addEventListener("click", () => {
+  window.localStorage.removeItem("mockLexSessionId");
+  window.location.reload();
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -57,7 +64,7 @@ async function sendMessage(rawMessage) {
 }
 
 socket.on("live:state", ({ conversationState, task }) => {
-  document.querySelector("#conversationState").textContent = conversationState;
+  setConversationState(conversationState);
 
   if (task) {
     document.querySelector("#sessionStateOutput").textContent = JSON.stringify(task, null, 2);
@@ -98,14 +105,42 @@ function appendMessage(type, text) {
 function renderDetails(payload) {
   document.querySelector("#intentName").textContent = payload.intent?.name || "Unknown";
   document.querySelector("#connectAction").textContent = payload.connectAction || "Unknown";
-  document.querySelector("#conversationState").textContent =
-    payload.conversationState || payload.sessionState?.sessionAttributes?.conversationState || "Unknown";
+  setConversationState(
+    payload.conversationState || payload.sessionState?.sessionAttributes?.conversationState || "Unknown"
+  );
   document.querySelector("#slotsOutput").textContent = JSON.stringify(payload.slots || {}, null, 2);
   document.querySelector("#sessionStateOutput").textContent = JSON.stringify(
     payload.sessionState || {},
     null,
     2
   );
+}
+
+function setConversationState(conversationState) {
+  const descriptions = {
+    BOT_ACTIVE: "Bot is handling this conversation.",
+    WAITING_FOR_AGENT: "Customer is waiting in the local agent queue.",
+    AGENT_CONNECTED: "Live agent is connected. Messages go to the agent.",
+    ENDED: "Conversation ended. Start a new session or send a new bot message.",
+    Unknown: "State is not available yet."
+  };
+  const bannerClasses = {
+    BOT_ACTIVE: "state-bot",
+    WAITING_FOR_AGENT: "state-waiting",
+    AGENT_CONNECTED: "state-agent",
+    ENDED: "state-ended",
+    Unknown: "state-ended"
+  };
+  const isLiveAgentState = conversationState === "WAITING_FOR_AGENT" || conversationState === "AGENT_CONNECTED";
+
+  document.querySelector("#conversationState").textContent = conversationState;
+  stateBanner.className = `state-banner ${bannerClasses[conversationState] || "state-ended"}`;
+  stateBanner.querySelector("strong").textContent = conversationState;
+  stateBanner.querySelector("span").textContent = descriptions[conversationState] || descriptions.Unknown;
+
+  quickActionButtons.forEach((button) => {
+    button.disabled = isLiveAgentState;
+  });
 }
 
 function getOrCreateSessionId() {
