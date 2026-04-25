@@ -1,0 +1,26 @@
+{
+  "name": "amazon-lex-chatbot",
+  "version": "1.0.0",
+  "description": "Mock Amazon Lex V2 and Amazon Connect chatbot backend using Node.js and Express.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "amazon-lex",
+    "amazon-connect",
+    "mock-chatbot",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0"
+  },
+  "devDependencies": {}
+}
