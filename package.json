@@ -1,7 +1,7 @@
 {
   "name": "amazon-lex-chatbot",
   "version": "1.0.0",
-  "description": "Mock Amazon Lex V2 and Amazon Connect chatbot backend using Node.js and Express.",
+  "description": "Local mock Amazon Lex V2, Amazon Connect, and live-agent handoff app using Node.js, Express, and Socket.IO.",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
@@ -20,7 +20,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {}
 }

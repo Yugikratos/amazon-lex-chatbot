@@ -3,10 +3,12 @@ const input = document.querySelector("#messageInput");
 const messages = document.querySelector("#messages");
 const quickActionButtons = document.querySelectorAll("[data-message]");
 const sessionId = getOrCreateSessionId();
+const socket = io();
 
 document.querySelector("#sessionIdLabel").textContent = sessionId;
 
 appendMessage("bot", "Hello. Try one of the sample buttons or type your own message.");
+socket.emit("customer:join", { sessionId });
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -54,6 +56,37 @@ async function sendMessage(rawMessage) {
   }
 }
 
+socket.on("live:state", ({ conversationState, task }) => {
+  document.querySelector("#conversationState").textContent = conversationState;
+
+  if (task) {
+    document.querySelector("#sessionStateOutput").textContent = JSON.stringify(task, null, 2);
+  }
+
+  if (conversationState === "WAITING_FOR_AGENT") {
+    appendMessage("system", "Waiting for an agent to accept this chat.");
+  }
+
+  if (conversationState === "AGENT_CONNECTED") {
+    appendMessage("system", "Agent connected. You can keep typing here.");
+  }
+
+  if (conversationState === "ENDED") {
+    appendMessage("system", "Agent ended the chat. Send a new message to restart with the bot.");
+  }
+});
+
+socket.on("live:message", ({ message }) => {
+  if (!message || message.sender === "customer") return;
+
+  if (message.sender === "agent") {
+    appendMessage("bot", `Agent: ${message.content}`);
+    return;
+  }
+
+  appendMessage("system", message.content);
+});
+
 function appendMessage(type, text) {
   const message = document.createElement("div");
   message.className = `message ${type}`;
@@ -65,6 +98,8 @@ function appendMessage(type, text) {
 function renderDetails(payload) {
   document.querySelector("#intentName").textContent = payload.intent?.name || "Unknown";
   document.querySelector("#connectAction").textContent = payload.connectAction || "Unknown";
+  document.querySelector("#conversationState").textContent =
+    payload.conversationState || payload.sessionState?.sessionAttributes?.conversationState || "Unknown";
   document.querySelector("#slotsOutput").textContent = JSON.stringify(payload.slots || {}, null, 2);
   document.querySelector("#sessionStateOutput").textContent = JSON.stringify(
     payload.sessionState || {},

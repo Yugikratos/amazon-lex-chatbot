@@ -1,5 +1,5 @@
 import { detectIntent, extractSlots, INTENTS } from "./intentDetector.js";
-import { updateSession } from "./sessionStore.js";
+import { CONVERSATION_STATES, setConversationState, updateSession } from "./sessionStore.js";
 
 const CONNECT_ACTIONS = {
   CONTINUE_BOT: "ContinueBot",
@@ -17,9 +17,13 @@ export function recognizeText({ message, sessionId }) {
     slots,
     connectAction
   });
+  const conversationState = getConversationState(intent.name, connectAction);
+
+  setConversationState(sessionId, conversationState);
 
   return {
     sessionId,
+    conversationState,
     intent,
     sessionState: {
       dialogAction: {
@@ -33,13 +37,26 @@ export function recognizeText({ message, sessionId }) {
       sessionAttributes: {
         turnCount: String(session.turnCount),
         lastIntent: intent.name,
-        connectAction
+        connectAction,
+        conversationState
       }
     },
     messages: getMessages(intent.name, slots),
     slots: session.slots,
     connectAction
   };
+}
+
+function getConversationState(intentName, connectAction) {
+  if (intentName === INTENTS.TALK_TO_AGENT) {
+    return CONVERSATION_STATES.WAITING_FOR_AGENT;
+  }
+
+  if (connectAction === CONNECT_ACTIONS.END_CONVERSATION) {
+    return CONVERSATION_STATES.ENDED;
+  }
+
+  return CONVERSATION_STATES.BOT_ACTIVE;
 }
 
 function getConnectAction(intentName, slots) {

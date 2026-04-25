@@ -1,0 +1,130 @@
+.agent-shell {
+  width: min(1180px, calc(100vw - 32px));
+  min-height: calc(100vh - 32px);
+  margin: 16px auto;
+}
+
+.agent-header,
+.queue-panel,
+.workspace-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+  min-height: calc(100vh - 128px);
+}
+
+.queue-panel,
+.workspace-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workspace-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-title h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel-title span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #eef6f4;
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.task-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.task-card strong {
+  font-size: 0.92rem;
+}
+
+.task-card p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.task-card button,
+#endChatButton {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.task-card button:hover,
+#endChatButton:hover {
+  background: var(--accent-dark);
+}
+
+#endChatButton {
+  padding: 0 12px;
+  background: #b42318;
+}
+
+#endChatButton:disabled,
+.composer button:disabled,
+.composer input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.agent-messages {
+  min-height: 420px;
+}
+
+@media (max-width: 880px) {
+  .agent-grid {
+    grid-template-columns: 1fr;
+  }
+}

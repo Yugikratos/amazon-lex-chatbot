@@ -93,6 +93,29 @@ h1 {
   text-align: right;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--accent-dark);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.agent-link:hover {
+  background: #eef6f4;
+}
+
 .session-pill span {
   color: var(--muted);
   font-size: 0.72rem;
@@ -158,6 +181,14 @@ h1 {
   align-self: flex-start;
   background: #fff1f0;
   color: var(--danger);
+}
+
+.message.system {
+  align-self: center;
+  max-width: 88%;
+  background: #fff7df;
+  color: #6d4b00;
+  font-size: 0.9rem;
 }
 
 .composer {
@@ -255,6 +286,12 @@ pre {
   .chat-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
   }
 
   .session-pill {

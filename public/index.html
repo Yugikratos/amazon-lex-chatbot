@@ -14,9 +14,12 @@
             <p class="eyebrow">Mock Amazon Lex V2</p>
             <h1>Connect Support Bot</h1>
           </div>
-          <div class="session-pill">
-            <span>Session</span>
-            <strong id="sessionIdLabel">demo-1</strong>
+          <div class="header-actions">
+            <a class="agent-link" href="/agent" target="_blank" rel="noreferrer">Agent Dashboard</a>
+            <div class="session-pill">
+              <span>Session</span>
+              <strong id="sessionIdLabel">demo-1</strong>
+            </div>
           </div>
         </header>
 
@@ -55,6 +58,11 @@
         </div>
 
         <div class="details-card">
+          <h2>Conversation State</h2>
+          <p id="conversationState">BOT_ACTIVE</p>
+        </div>
+
+        <div class="details-card">
           <h2>Slots</h2>
           <pre id="slotsOutput">{}</pre>
         </div>
@@ -66,6 +74,7 @@
       </aside>
     </main>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

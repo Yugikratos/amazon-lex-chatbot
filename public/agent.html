@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mock Agent Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/agent.css" />
+  </head>
+  <body>
+    <main class="agent-shell">
+      <header class="agent-header">
+        <div>
+          <p class="eyebrow">Mock Amazon Connect</p>
+          <h1>Agent Dashboard</h1>
+        </div>
+        <a class="agent-link" href="/">Customer Chat</a>
+      </header>
+
+      <section class="agent-grid">
+        <aside class="queue-panel">
+          <div class="panel-title">
+            <h2>Waiting Chats</h2>
+            <span id="waitingCount">0</span>
+          </div>
+          <div id="waitingTasks" class="task-list"></div>
+        </aside>
+
+        <section class="workspace-panel">
+          <div class="panel-title">
+            <h2 id="activeTitle">No Active Chat</h2>
+            <button id="endChatButton" type="button" disabled>End Chat</button>
+          </div>
+
+          <div id="agentMessages" class="messages agent-messages"></div>
+
+          <form id="agentForm" class="composer">
+            <input
+              id="agentMessageInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Accept a chat to reply..."
+              disabled
+            />
+            <button type="submit" disabled>Send</button>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/agent.js"></script>
+  </body>
+</html>

@@ -1,50 +1,88 @@
-# Mock Amazon Lex V2 + Amazon Connect Chatbot
+# Local Mock Lex V2 + Mock Connect Chatbot
 
-This project is a Node.js Express app that simulates an Amazon Lex V2 chatbot and Amazon Connect routing without using AWS. It includes both:
+This is a 100% local Node.js Express project that simulates:
 
-- A backend API: `POST /chat`
-- A browser frontend: `http://localhost:3000`
+- Amazon Lex V2-style chatbot responses
+- Amazon Connect-style routing decisions
+- Live-agent handoff using Socket.IO
 
-Use this project to test chatbot flows locally before replacing the mock logic with real Amazon Lex V2 `RecognizeTextCommand` and Amazon Connect contact flows.
+It does not use OpenAI, Ollama, AWS, Twilio, paid APIs, cloud services, or external runtime services.
 
-## What It Does
+## Features
 
-- Accepts a user message and `sessionId`
-- Detects intents using keyword-based logic
-- Stores session state in memory
-- Returns a Lex V2-style response format
-- Simulates Amazon Connect routing with `connectAction`
-- Provides a simple frontend for testing without PowerShell JSON commands
+- Browser customer chat at `http://localhost:3000`
+- Browser agent dashboard at `http://localhost:3000/agent`
+- Existing `POST /chat` endpoint
+- Keyword-based intent detection
+- In-memory session state
+- In-memory live-agent tasks
+- Socket.IO real-time messaging between customer and mock agent
+- No database required
+- No cloud dependency
 
-## Supported Intents
+## Quick Start
 
-| Intent | Example message | Result |
-| --- | --- | --- |
-| `GreetingIntent` | `hello` | Starts or continues the bot conversation |
-| `CheckOrderStatusIntent` | `track my order ORD12345` | Extracts order ID and returns order-status response |
-| `RaiseComplaintIntent` | `my item arrived damaged for order ORD12345` | Captures complaint type and order ID |
-| `TalkToAgentIntent` | `I want to talk to a human agent` | Simulates transfer to an agent |
-| `FallbackIntent` | `random unknown text` | Handles unrecognized input |
+Run the app:
 
-## Simulated Amazon Connect Actions
+```powershell
+cd D:\amazon-lex-chatbot
+npm run dev
+```
 
-| connectAction | Meaning |
+If PowerShell blocks `npm`, run:
+
+```powershell
+npm.cmd run dev
+```
+
+Open these two pages:
+
+```text
+Customer chatbot: http://localhost:3000
+Agent dashboard:  http://localhost:3000/agent
+```
+
+Fastest test:
+
+1. In the customer page, click `Agent`.
+2. In the agent dashboard, click `Accept`.
+3. Send messages from both pages.
+4. Click `End Chat` in the agent dashboard.
+
+## Conversation States
+
+| State | Meaning |
 | --- | --- |
-| `ContinueBot` | Keep the customer in the bot flow |
-| `TransferToAgent` | Transfer the customer to a support agent or queue |
-| `EndConversation` | End the self-service flow after completing the request |
+| `BOT_ACTIVE` | Customer is chatting with the local mock bot |
+| `WAITING_FOR_AGENT` | Customer asked for an agent and is waiting in the mock queue |
+| `AGENT_CONNECTED` | Mock agent accepted the chat |
+| `ENDED` | Agent ended the chat or the bot completed a self-service flow |
+
+## Supported Bot Intents
+
+| Intent | Example message | connectAction |
+| --- | --- | --- |
+| `GreetingIntent` | `hello` | `ContinueBot` |
+| `CheckOrderStatusIntent` | `track my order ORD12345` | `EndConversation` when order ID is found |
+| `RaiseComplaintIntent` | `my item arrived damaged for order ORD12345` | `EndConversation` |
+| `TalkToAgentIntent` | `I want to talk to a human agent` | `TransferToAgent` |
+| `FallbackIntent` | `random unknown text` | `ContinueBot` |
 
 ## Project Structure
 
 ```text
 .
 |-- public
+|   |-- agent.css
+|   |-- agent.html
+|   |-- agent.js
 |   |-- app.js
 |   |-- index.html
 |   `-- styles.css
 |-- src
 |   |-- config.js
 |   |-- intentDetector.js
+|   |-- liveChatStore.js
 |   |-- mockLex.js
 |   |-- server.js
 |   `-- sessionStore.js
@@ -60,8 +98,6 @@ Use this project to test chatbot flows locally before replacing the mock logic w
 - Node.js 18 or later
 - npm
 
-No AWS account or AWS credentials are required for this mock version.
-
 ## Setup
 
 Install dependencies:
@@ -70,19 +106,19 @@ Install dependencies:
 npm install
 ```
 
-Create a local environment file:
+Create `.env`:
 
 ```powershell
 copy .env.example .env
 ```
 
-The only environment variable currently used is:
+Default `.env`:
 
 ```env
 PORT=3000
 ```
 
-Start the development server:
+Start the app:
 
 ```bash
 npm run dev
@@ -94,32 +130,163 @@ If PowerShell blocks `npm`, use:
 npm.cmd run dev
 ```
 
-You should see:
+Expected terminal output:
 
 ```text
 Server listening on port 3000
 ```
 
-## Use The Frontend
+## Easiest Local Test
 
-Open this URL in your browser:
+Open two browser tabs.
+
+Tab 1, customer chat:
 
 ```text
 http://localhost:3000
 ```
 
-The frontend includes:
+Tab 2, agent dashboard:
 
-- Chat input
-- Quick test buttons for all intents
+```text
+http://localhost:3000/agent
+```
+
+### Test Bot Chat
+
+In the customer tab, click or type:
+
+```text
+hello
+```
+
+Expected:
+
+- Intent: `GreetingIntent`
+- Conversation state: `BOT_ACTIVE`
+- Connect action: `ContinueBot`
+
+### Test Order Status
+
+In the customer tab, click `Order Status` or type:
+
+```text
+track my order ORD12345
+```
+
+Expected:
+
+- Intent: `CheckOrderStatusIntent`
+- Slot: `orderId = ORD12345`
+- Conversation state: `ENDED`
+- Connect action: `EndConversation`
+
+### Test Complaint
+
+In the customer tab, click `Complaint` or type:
+
+```text
+my item arrived damaged for order ORD12345
+```
+
+Expected:
+
+- Intent: `RaiseComplaintIntent`
+- Slots include `orderId` and `complaintType`
+- Conversation state: `ENDED`
+- Connect action: `EndConversation`
+
+### Test Live-Agent Handoff
+
+1. Open customer chat at `http://localhost:3000`.
+2. Open agent dashboard at `http://localhost:3000/agent`.
+3. In customer chat, click `Agent` or type:
+
+```text
+I want to talk to a human agent
+```
+
+4. Customer should move to:
+
+```text
+WAITING_FOR_AGENT
+```
+
+5. Agent dashboard should show a waiting chat.
+6. Click `Accept` in the agent dashboard.
+7. Customer should move to:
+
+```text
+AGENT_CONNECTED
+```
+
+8. Type messages from the customer page.
+9. Type replies from the agent dashboard.
+10. Click `End Chat` in the agent dashboard.
+11. Customer should move to:
+
+```text
+ENDED
+```
+
+Everything happens locally through Express and Socket.IO.
+
+## Frontend Pages
+
+### Customer Chat
+
+URL:
+
+```text
+http://localhost:3000
+```
+
+Use this page as the customer. It has:
+
+- Chat message input
+- Quick intent buttons
+- Bot response area
 - Intent display
 - Connect action display
-- Slots display
-- Session state display
+- Conversation state display
+- Slots and session state panels
+- Link to the agent dashboard
 
-This is the easiest way to check the chatbot.
+### Agent Dashboard
+
+URL:
+
+```text
+http://localhost:3000/agent
+```
+
+Use this page as the mock support agent. It has:
+
+- Waiting customer queue
+- `Accept` button
+- Live chat workspace
+- Agent reply input
+- `End Chat` button
+
+No login is required because this is a local mock project.
 
 ## API Endpoints
+
+### Customer Frontend
+
+```http
+GET /
+```
+
+Serves the browser chat UI.
+
+### Agent Dashboard
+
+```http
+GET /agent
+```
+
+Serves the mock agent dashboard.
 
 ### Health Check
 
@@ -146,62 +313,40 @@ Request:
 
 ```json
 {
-  "message": "track my order ORD12345",
+  "message": "I want to talk to a human agent",
   "sessionId": "demo-1"
 }
 ```
 
-Response:
+Response when handoff starts:
 
 ```json
 {
   "sessionId": "demo-1",
+  "conversationState": "WAITING_FOR_AGENT",
   "intent": {
-    "name": "CheckOrderStatusIntent",
+    "name": "TalkToAgentIntent",
     "confidence": 0.95,
     "state": "Fulfilled"
-  },
-  "sessionState": {
-    "dialogAction": {
-      "type": "Close"
-    },
-    "intent": {
-      "name": "CheckOrderStatusIntent",
-      "state": "Fulfilled",
-      "slots": {
-        "orderId": {
-          "value": {
-            "interpretedValue": "ORD12345"
-          }
-        }
-      }
-    },
-    "sessionAttributes": {
-      "turnCount": "1",
-      "lastIntent": "CheckOrderStatusIntent",
-      "connectAction": "EndConversation"
-    }
   },
   "messages": [
     {
       "contentType": "PlainText",
-      "content": "Your order ORD12345 is being checked. You will receive the latest status shortly."
+      "content": "I will transfer you to a support agent now."
     }
   ],
-  "slots": {
-    "orderId": {
-      "value": {
-        "interpretedValue": "ORD12345"
-      }
-    }
-  },
-  "connectAction": "EndConversation"
+  "connectAction": "TransferToAgent",
+  "agentTask": {
+    "taskId": "task-demo-1",
+    "sessionId": "demo-1",
+    "state": "WAITING_FOR_AGENT"
+  }
 }
 ```
 
-## PowerShell Test Requests
+## PowerShell API Tests
 
-The browser UI is easier, but you can also test the API from PowerShell.
+The browser UI is easier, but the API still works directly.
 
 Greeting:
 
@@ -210,21 +355,21 @@ $body = @{ message = "hello"; sessionId = "demo-1" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:3000/chat" -ContentType "application/json" -Body $body
 ```
 
-Check order status:
+Order status:
 
 ```powershell
 $body = @{ message = "track my order ORD12345"; sessionId = "demo-1" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:3000/chat" -ContentType "application/json" -Body $body
 ```
 
-Raise complaint:
+Complaint:
 
 ```powershell
 $body = @{ message = "my item arrived damaged for order ORD12345"; sessionId = "demo-1" } | ConvertTo-Json
 Invoke-RestMethod -Method POST -Uri "http://localhost:3000/chat" -ContentType "application/json" -Body $body
 ```
 
-Talk to agent:
+Agent handoff:
 
 ```powershell
 $body = @{ message = "I want to talk to a human agent"; sessionId = "demo-1" } | ConvertTo-Json
@@ -238,156 +383,109 @@ $body = @{ message = "random unknown text"; sessionId = "demo-1" } | ConvertTo-J
 Invoke-RestMethod -Method POST -Uri "http://localhost:3000/chat" -ContentType "application/json" -Body $body
 ```
 
-## How The Code Works
+## How The Local Handoff Works
+
+1. Customer sends a message through the browser UI.
+2. Browser calls `POST /chat`.
+3. `src/intentDetector.js` detects intent using keywords.
+4. `src/mockLex.js` builds a Lex V2-style response.
+5. If the intent is `TalkToAgentIntent`, `src/server.js` creates a mock agent task.
+6. Socket.IO sends the waiting task to all open `/agent` dashboards.
+7. Agent clicks `Accept`.
+8. Server changes state to `AGENT_CONNECTED`.
+9. Customer and agent exchange Socket.IO messages.
+10. Agent clicks `End Chat`.
+11. Server changes state to `ENDED`.
+
+## Important Files
 
 ### `src/server.js`
 
-Creates the Express server, serves the frontend from `public`, exposes `/health`, and handles `/chat`.
+Main Express and Socket.IO server.
+
+It handles:
+
+- Static frontend files
+- `/health`
+- `/chat`
+- `/agent`
+- Socket.IO customer events
+- Socket.IO agent events
+- Agent task creation on `TalkToAgentIntent`
 
 ### `src/intentDetector.js`
 
-Uses keyword rules to detect the intent:
-
-- Greeting keywords: `hi`, `hello`, `hey`
-- Order keywords: `order`, `track`, `status`, `delivery`
-- Complaint keywords: `complaint`, `damaged`, `broken`, `refund`, `return`
-- Agent keywords: `agent`, `human`, `representative`, `customer care`
-
-It also extracts simple slots such as:
-
-- `orderId`
-- `complaintType`
-
-### `src/sessionStore.js`
-
-Stores sessions in memory using a JavaScript `Map`.
-
-Each session tracks:
-
-- `sessionId`
-- `turnCount`
-- `currentIntent`
-- `slots`
-- `history`
-- timestamps
-
-Sessions are reset when the server restarts.
+Keyword-based intent detection and slot extraction.
 
 ### `src/mockLex.js`
 
-Builds the Lex V2-style response and decides the simulated Amazon Connect action.
-
-Example:
-
-- `TalkToAgentIntent` returns `TransferToAgent`
-- Completed order status returns `EndConversation`
-- Fallback returns `ContinueBot`
-
-### `public`
-
-Contains the browser chat UI:
-
-- `index.html`: page layout
-- `styles.css`: UI styling
-- `app.js`: browser-side chat logic using `fetch("/chat")`
-
-## Replacing The Mock With Real AWS Lex V2
-
-When your real Amazon Lex V2 bot is ready, replace the local logic in `src/mockLex.js` with AWS SDK v3 Lex Runtime V2.
-
-Install the AWS SDK package:
-
-```bash
-npm install @aws-sdk/client-lex-runtime-v2
-```
-
-Add environment variables:
-
-```env
-AWS_REGION=us-east-1
-LEX_BOT_ID=your_lex_bot_id
-LEX_BOT_ALIAS_ID=your_lex_bot_alias_id
-LEX_LOCALE_ID=en_US
-```
-
-Example Lex call:
-
-```js
-import {
-  LexRuntimeV2Client,
-  RecognizeTextCommand
-} from "@aws-sdk/client-lex-runtime-v2";
-
-const client = new LexRuntimeV2Client({
-  region: process.env.AWS_REGION
-});
-
-const command = new RecognizeTextCommand({
-  botId: process.env.LEX_BOT_ID,
-  botAliasId: process.env.LEX_BOT_ALIAS_ID,
-  localeId: process.env.LEX_LOCALE_ID,
-  sessionId,
-  text: message
-});
-
-const response = await client.send(command);
-```
-
-Then map the real Lex response into the same frontend contract:
+Creates Lex V2-style responses:
 
 - `sessionId`
+- `conversationState`
 - `intent`
 - `sessionState`
 - `messages`
 - `slots`
 - `connectAction`
 
-Keeping the response shape stable means the frontend does not need major changes when you switch from mock Lex to real Lex.
+### `src/sessionStore.js`
 
-## Connecting Real Lex To Amazon Connect
+In-memory customer session state.
 
-With real Amazon Connect:
+### `src/liveChatStore.js`
 
-1. Open the Amazon Connect console.
-2. Select your Connect instance.
-3. Add your Lex V2 bot alias to the instance integration settings.
-4. Open or create a contact flow.
-5. Add a `Get customer input` block.
-6. Select your Lex V2 bot, alias, and locale.
-7. Map Lex intents to contact-flow branches.
-8. Route `TalkToAgentIntent` to `Transfer to queue`.
-9. Route fallback and no-input branches to retry prompts or a support queue.
-10. Publish the contact flow.
-11. Attach the flow to a phone number or entry point.
+In-memory mock agent task state.
 
-Mock-to-Connect mapping:
+### `public/index.html`
 
-| Mock intent | Mock connectAction | Real Amazon Connect behavior |
+Customer chatbot page.
+
+### `public/agent.html`
+
+Mock live-agent dashboard.
+
+## Socket.IO Events
+
+### Customer Events
+
+| Event | Direction | Purpose |
 | --- | --- | --- |
-| `GreetingIntent` | `ContinueBot` | Continue in the `Get customer input` flow |
-| `CheckOrderStatusIntent` | `EndConversation` | Call Lambda/order API, play result, disconnect or continue |
-| `RaiseComplaintIntent` | `EndConversation` | Create complaint case, play confirmation, disconnect or continue |
-| `TalkToAgentIntent` | `TransferToAgent` | Transfer to queue |
-| `FallbackIntent` | `ContinueBot` | Retry prompt or fallback branch |
+| `customer:join` | Browser to server | Join a customer session room |
+| `live:state` | Server to browser | Notify customer about state changes |
+| `live:message` | Server to browser | Deliver agent/system messages |
 
-## Production Notes
+### Agent Events
 
-- Add authentication before exposing `/chat` publicly.
-- Add rate limiting for public clients.
-- Move session state from memory to Redis, DynamoDB, or another shared store for multi-instance deployments.
-- Add structured logging for request IDs and session IDs.
-- Avoid logging sensitive user messages in production.
-- Keep the frontend API contract stable while replacing the mock with AWS services.
+| Event | Direction | Purpose |
+| --- | --- | --- |
+| `agent:join` | Agent browser to server | Join the agent dashboard |
+| `agent:tasks` | Server to agent browser | Send waiting/active tasks |
+| `agent:accept` | Agent browser to server | Accept a waiting customer chat |
+| `agent:message` | Agent browser to server | Send message to customer |
+| `agent:end` | Agent browser to server | End the active chat |
+| `live:message` | Server to agent browser | Deliver customer/system messages |
+
+## Local-Only Limitations
+
+- Sessions are stored in memory.
+- Agent tasks are stored in memory.
+- Data is lost when the server restarts.
+- Multiple Node.js instances will not share sessions.
+- There is no authentication.
+- There is no real queue, routing profile, or contact center backend.
+
+For this project, those limitations are intentional because the goal is a free local mock.
 
 ## Useful Commands
 
-Start development server:
+Start dev server:
 
 ```bash
 npm run dev
 ```
 
-Start production server:
+Start normal server:
 
 ```bash
 npm start
@@ -397,4 +495,61 @@ Check health:
 
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:3000/health"
+```
+
+Open customer page:
+
+```text
+http://localhost:3000
+```
+
+Open agent dashboard:
+
+```text
+http://localhost:3000/agent
+```
+
+## Troubleshooting
+
+### Browser still shows old page
+
+Stop and restart the server:
+
+```powershell
+Ctrl + C
+npm run dev
+```
+
+Then refresh the browser.
+
+### Port 3000 is already in use
+
+Either stop the old server with `Ctrl + C`, or change `.env`:
+
+```env
+PORT=3001
+```
+
+Then open:
+
+```text
+http://localhost:3001
+http://localhost:3001/agent
+```
+
+### Agent dashboard does not show waiting chat
+
+Check these steps:
+
+1. Open both pages from the same running server.
+2. In the customer page, click `Agent`.
+3. Confirm the customer page shows `WAITING_FOR_AGENT`.
+4. Refresh `/agent` if it was opened before the server restarted.
+
+### Messages do not move between customer and agent
+
+Make sure the agent clicked `Accept`. Live messages only start after the state becomes:
+
+```text
+AGENT_CONNECTED
 ```
